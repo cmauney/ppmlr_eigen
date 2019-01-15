@@ -2,7 +2,7 @@
 
 #include <tuple>
 #include <utility>
-#include <valarray>
+#include <array>
 
 #include "global_def.hpp"
 #include "ppmlr/ppm_constant.hpp"
@@ -19,6 +19,7 @@ constexpr double epsilon = 0.33;
 constexpr index_type N_STATEV = 3;
 constexpr index_type NZ_GHOST = 6;
 
+
 // constexpr size_t GRID_NX = 100;
 // constexpr size_t GRID_NY = 100;
 
@@ -30,7 +31,17 @@ struct VectorFrame {
   constexpr static index_type jM = N + NZ_GHOST;
 };
 
-template <typename Container>
-using FluidVars = std::array<Container, N_FLUIDV>;
+
+
+template <index_type N>
+using ppm_gridset = GridSet<VectorFrame<N>::iN>;
+
+template <index_type N>
+using ppm_varset = VarSet<VectorFrame<N>::iN>;
+
+enum {PRHO, PPRS, PXVL, PENT, PFLT};
+
+//template <typename Container>
+//using FluidVars = std::array<Container, N_FLUIDV>;
 
 }  // namespace ppm

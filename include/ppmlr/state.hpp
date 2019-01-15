@@ -23,10 +23,10 @@ struct StateDomain {
   StateDomain() = default;
   ~StateDomain() = default;
 
-  constexpr inline void build(const physics::Hydro& hydro,
+  constexpr inline void build(const double hdt,
                               const vector_type& cdx) {
     auto i_ = Eigen::seqN(frame::i0 + 2, Eigen::fix<frame::iN - 4>);
-    Cdtdx(i_) = cdx(i_) * hydro.hdt;
+    Cdtdx(i_) = cdx(i_) * hdt;
     fCdtdx(i_) = 1.0 - fourthird * Cdtdx(i_);
     /*
     for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
@@ -57,7 +57,7 @@ struct State {
   }
 };
 
-template <typename StateType, index_type NSt>
+template <typename StateType>
 struct StateSet {
   using state_type = StateType;
   using vector_type = typename state_type::vector_type;
@@ -65,36 +65,27 @@ struct StateSet {
   using reconstruct_type = typename state_type::reconstruct_type;
 
   domain_type domain;
-  std::array<state_type, NSt> states;
-  std::array<FLUID_VI, NSt> fluid_ids;
+
+  std::array<state_type, 3> states;
+
+//  state_type rho_s, prs_s, xvl_s;
 
   StateSet() = default;
 
-  StateSet(std::array<FLUID_VI, NSt> rcis) : fluid_ids(std::move(rcis)) {}
-
-  constexpr inline void prepare(const physics::Hydro& hydro,
+  constexpr inline void prepare(const double hdt,
                                 const vector_type& cdx) {
-    domain.build(hydro, cdx);
+    domain.build(hdt, cdx);
   }
 
   template <typename RCs>
-  //  constexpr inline void build(const std::array<reconstruct_type, Sp>& recos)
-  //  {
   constexpr inline void build(const RCs& recos) {
-    for (index_type i = 0; i < NSt; ++i) {
-      states[i].build_state(recos[fluid_ids[i]], domain);
+    for (index_type i = 0; i < 3; ++i) {
+      states[i].build_state(recos[i], domain);
     }
   }
 
-  constexpr inline const state_type& operator[](const FLUID_VI fi) const {
-    index_type ri = NSt + 1;
-    for (index_type i = 0; i < NSt; ++i) {
-      if (fi == fluid_ids[i]) {
-        ri = i;
-        break;
-      }
-    }
-    return states[ri];
+  constexpr inline const state_type& operator[](const index_type i) const {
+    return states[i];
   }
 };
 

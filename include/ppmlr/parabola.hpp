@@ -294,7 +294,7 @@ struct Parabola {
   }
 };
 
-template <typename ParabolaType>
+template <typename ParabolaType, index_type NP>
 struct ParabolaSet {
   using parabola_type = ParabolaType;
   using frame = typename parabola_type::frame;
@@ -303,7 +303,11 @@ struct ParabolaSet {
   using arg_matrix_type = typename parabola_type::arg_matrix_type;
 
   using parabola_basis = typename parabola_type::basis_type;
-  using parabola_array = FluidVars<parabola_type>;
+//  using parabola_array = FluidVars<parabola_type>;
+  using parabola_array = std::array<parabola_type, NP>;
+  using p_data = std::array<vector_type&, NP>;
+
+  constexpr static index_type NPARA = NP;
 
   parabola_basis basis;
   parabola_array parabolas;
@@ -314,13 +318,11 @@ struct ParabolaSet {
   inline void prepare(const arg_vector_type& dx) { basis.prepare(dx); }
 
   //  template <index_type FN>
-  template <typename IdxSet>
-  constexpr inline void build(const FluidVars<vector_type>& fluid_v,
-                              const vector_type& flat,
-                              //   const std::array<FLUID_VI, FN>& fidx) {
-                              const IdxSet& fidx) {
-    for (FLUID_VI fi : fidx) {
-      parabolas[fi].construct(fluid_v[fi], flat, basis.basis);
+  constexpr inline void build(const p_data& fluid_v,
+                              const vector_type& flat){
+                              //   const std::array<FLUID_VI, FN>& fidx) {) {
+    for (index_type i = 0; i < NP; ++i) {
+      parabolas[i].construct(fluid_v[i], flat, basis.basis);
     }
   }
 

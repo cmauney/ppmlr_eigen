@@ -8,6 +8,7 @@
 
 #include <Eigen/Dense>
 
+#include "global_def.hpp"
 #include "physics/hydro.hpp"
 #include "ppmlr/boundary_conditions.hpp"
 #include "ppmlr/parabola.hpp"
@@ -19,7 +20,7 @@
 
 namespace ppm {
 
-template <typename GeoType, index_type N>
+template <typename GeoType, typename TimestepType, typename EOSType, index_type N>
 struct PPMLR {
   using frame = VectorFrame<N>;
 
@@ -30,18 +31,22 @@ struct PPMLR {
   using state_domain_type = StateDomain<frame>;
   using state_type = State<parabola_type, state_domain_type>;
 
-  using parabola_set = ParabolaSet<parabola_type>;
-  using state_set = StateSet<state_type, N_STATEV>;
+  template<index_type NP>
+  using parabola_set = ParabolaSet<parabola_type, NP>;
+  using state_set = StateSet<state_type>;
   using riemann = RiemannSolve<state_type>;
 
   using vector_type = typename grid_type::vector_type;
 
-  const physics::Hydro& hydro;  // reference to 'globals'
+//  const physics::Hydro& hydro;  // reference to 'globals'
+  const  TimestepType& ts;
+  const EOSType& eos;
 
   // coordinate vars
   grid_type grid;
   // fluid vars
-  FluidVars<vector_type> fluid_v;
+//  FluidVars<vector_type> fluid_v;
+  ppm_varset<N> v;
 
   // boundary do-er
   bc_type bc;
@@ -49,7 +54,8 @@ struct PPMLR {
   // flatten stuff
   //  flat_type flat;
   // parabolas
-  parabola_set parabolas;
+  parabola_set<3> parabolas_prim;
+  parabola_set<6> parabolas_cons;
   // states
   state_set states;
   // riemann-er
@@ -65,8 +71,8 @@ struct PPMLR {
   // max svel in sweep
   double max_cdx;
 
-  PPMLR(const physics::Hydro& _hydro)
-      : hydro(_hydro), states(PRIMATIVE_VARS), max_cdx(zero) {}
+  PPMLR(const TimestepType& _ts, const EOSType& _eos)
+      : ts(_ts), eos(_eos), max_cdx(zero) {}
 
   ~PPMLR() = default;
 
@@ -79,16 +85,6 @@ struct PPMLR {
                        const VectorType<N>& yvel,
                        const VectorType<N>& zvel,
                        const VectorType<N>& f) {
-    /*    grid.xe[0].assign(xe);*/
-    // grid.xc[0].assign(xc);
-    // grid.dx[0].assign(dx);
-
-    // fluid_v[RHO].assign(rho);
-    // fluid_v[PRS].assign(prs);
-    // fluid_v[XVL].assign(xvel);
-    // fluid_v[YVL].assign(yvel);
-    // fluid_v[ZVL].assign(zvel);
-    // fluid_v[FLT].assign(f);
 
     auto i_lhs = Eigen::seqN(frame::j0, Eigen::fix<N>);
 
@@ -138,42 +134,23 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
 }*/
   }
 
-  inline void build_ekin() {
-    /*for (index_type i = frame::i0; i < frame::iN; ++i)
-      ekin[i] = fluid_v[XVL][i] * fluid_v[XVL][i];
-
-    for (index_type i = frame::i0; i < frame::iN; ++i)
-      ekin[i] += fluid_v[YVL][i] * fluid_v[YVL][i];
-
-    for (index_type i = frame::i0; i < frame::iN; ++i)
-      ekin[i] += fluid_v[ZVL][i] * fluid_v[ZVL][i];
-
-    for (index_type i = frame::i0; i < frame::iN; ++i)
-      ekin[i] *= 0.5;*/
+  constexpr inline void build_ekin() {
     ekin = half * (fluid_v[XVL].square() + fluid_v[YVL].square() +
                    fluid_v[ZVL].square());
   }
 
-  inline void build_cdx() {
+  constexpr inline void build_cdx() {
     auto i_ = Eigen::seqN(frame::i0 + 2, Eigen::fix<frame::iN - 4>);
 
     cdx(i_) = (hydro.gamma * fluid_v[PRS](i_) / fluid_v[RHO](i_)).sqrt() /
               (grid.dx[0](i_) * grid.radius);
 
     max_cdx = cdx(i_).maxCoeff();
-    /*max_cdx = 0.0;
-    for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
-      cdx[i] = sqrt(hydro.gamma * fluid_v[PRS][i] / fluid_v[RHO][i]) /
-               (grid.dx[0][i] * grid.radius);
-      max_cdx = std::max(max_cdx, cdx[i]);
-    }*/
   }
 
   inline void flatten() {
     double delp1, delp2, zsten;
     double shock, old_flat;
-
-    // auto i_ = Eigen::seqN(frame::i0 + 2, Eigen::fix<frame::iN - 4>);
 
     for (index_type i = frame::j0 - 4; i < frame::jM + 4; ++i) {
       delp1 = fluid_v[PRS][i + 1] - fluid_v[PRS][i - 1];
@@ -214,7 +191,7 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
     }
   }
 
-  inline void evolve() {
+  constexpr inline void evolve() {
     grid.template build_volume<0>();
 
     auto i_ = Eigen::seqN(frame::i0 + 3, Eigen::fix<frame::iN - 5>);
@@ -222,13 +199,6 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
     dtdm(i_) = hydro.dt / dm(i_);
     grid.xe[1](i_) = grid.xe[0](i_) + hydro.dt * umid(i_) / grid.radius;
     upmid(i_) = umid(i_) * pmid(i_);
-    /*
-    for (index_type i = frame::i0 + 3; i < frame::iN - 2; ++i) {
-      dm[i] = fluid_v[RHO][i] * grid.dvol[0][i];
-      dtdm[i] = hydro.dt / dm[i];
-      grid.xe[1][i] = grid.xe[0][i] + hydro.dt * umid[i] / grid.radius;
-      upmid[i] = umid[i] * pmid[i];
-    }*/
 
     for (index_type i = 0; i < 2; ++i) {
       grid.xe[1][frame::i0 + 2 - i] = grid.xe[0][frame::i0 + 2 - i];
@@ -243,9 +213,6 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
     grid.template build_volume<1>();
     grid.build_amid();
 
-    // dump_vec_and_keep_calm(frame::i0, frame::iN, grid.xe[0],
-    //                       grid.xe[1]);
-
     auto j_ = Eigen::seqN(frame::i0 + 3, Eigen::fix<frame::iN - 6>);
 
     fluid_v[RHO](j_) *= (grid.dvol[0](j_) / grid.dvol[1](j_));
@@ -258,36 +225,16 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
     fluid_v[ENT](j_) -= dtdm(j_) * (grid.amid(j_ + 1) * upmid(j_ + 1) -
                                     grid.amid(j_) * upmid(j_));
 
-    /*
-        for (index_type i = frame::i0 + 3; i < frame::iN - 3; ++i) {
-          // fluid_v[RHO][i] *= (grid.dvol[0][i] / grid.dvol[1][i]);
-
-          // uold[i] = fluid_v[XVL][i];
-
-          fluid_v[XVL][i] -= dtdm[i] * (pmid[i + 1] - pmid[i]) * 0.5 *
-                             (grid.amid[i + 1] + grid.amid[i]);
-
-          fluid_v[ENT][i] -=
-              dtdm[i] * (grid.amid[i + 1] * upmid[i + 1] - grid.amid[i] *
-       upmid[i]);
-        }
-    */
-    build_ekin();
+        build_ekin();
 
     fluid_v[EIN](j_) = fluid_v[ENT](j_) - ekin(j_);
     fluid_v[EIN](j_) =
         fluid_v[EIN](j_).max(smallp / (hydro.gammam1 * fluid_v[RHO](j_)));
 
-    /*for (index_type i = frame::i0 + 3; i < frame::iN - 3; ++i) {
-      fluid_v[EIN][i] = fluid_v[ENT][i] - ekin[i];
-
-      fluid_v[EIN][i] =
-          std::max(fluid_v[EIN][i], smallp / (hydro.gammam1 * fluid_v[RHO][i]));
-    }*/
   }
 
-  inline void remap() {
-    double fn1, fn2;
+  constexpr inline void remap() {
+    double fn1 = 0., fn2 = 0.;
 
     parabolas.prepare(grid.dx[1]);
 
@@ -322,23 +269,6 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
       }
     }
 
-    /*    for (auto i = frame::j0; i < frame::jM + 1; ++i) {
-          fn1 = 0.5 * grid.xndiff[i] / grid.dx[1][i - 1];
-          fn2 = 1.0 - fourthird * fn1;
-
-          std::cout << i << " " << i + 1 << " " << parabolas[RHO].al[i - 1] << "
-       "
-                    << parabolas[RHO].da[i - 1] << " " << parabolas[RHO].a6[i -
-       1]
-                    << " " << flat[i - 1];
-
-          std::cout << std::endl;
-        }
-        std::exit(1);
-    */
-    //    dump_vec_and_keep_calm(frame::j0, frame::jM + 1,
-    //    fluxes[RHO]);
-
     for (index_type i = frame::j0 - 1; i < frame::jM + 1; ++i) {
       dm[i] = fluid_v[RHO][i] * grid.dvol[1][i];
       dm0[i] = (dm[i] + fluxes[RHO][i] - fluxes[RHO][i + 1]);
@@ -365,7 +295,7 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
 
   }  // remap
 
-  inline void wiggle() {
+  constexpr inline void wiggle() {
     if (xwig * flat.sum() != 0.0) {
       //      std::cout << "DO WHIG\n";
       grid.store_coords();
@@ -385,7 +315,7 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
     }
   }
 
-  inline void operator()() {
+  constexpr inline void operator()() {
     bc.apply(grid, fluid_v);
 
     build_cdx();
