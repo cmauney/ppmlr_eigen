@@ -46,7 +46,9 @@ struct PPMLR {
   grid_type grid;
   // fluid vars
 //  FluidVars<vector_type> fluid_v;
-  ppm_varset<N> v;
+  PPMVarSet<N> v;
+  PPMSub<N, NQV> Q;
+  PPMSub<N, NUV> U;
 
   // boundary do-er
   bc_type bc;
@@ -72,11 +74,12 @@ struct PPMLR {
   double max_cdx;
 
   PPMLR(const TimestepType& _ts, const EOSType& _eos)
-      : ts(_ts), eos(_eos), max_cdx(zero) {}
+      : ts(_ts), eos(_eos), max_cdx(zero), 
+      Q{v.fluid_sca.all({RHO}), v.fluid_sca.all({PRS}), v.fluid_vec.all({0, VEL})} {}
 
   ~PPMLR() = default;
 
-  inline void put_vars(const VectorType<N>& xe,
+/*  inline void put_vars(const VectorType<N>& xe,
                        const VectorType<N>& xc,
                        const VectorType<N>& dx,
                        const VectorType<N>& rho,
@@ -84,20 +87,28 @@ struct PPMLR {
                        const VectorType<N>& xvel,
                        const VectorType<N>& yvel,
                        const VectorType<N>& zvel,
-                       const VectorType<N>& f) {
-
+                       const VectorType<N>& f) {*/
+    template<typename GridSlice, typename ScalarSlice, typename VectorSlice>
+    inline void put_vars( const GridSlice& in_g, const ScalarSlice& in_s, const VectorSlice in_v  )
+    {
     auto i_lhs = Eigen::seqN(frame::j0, Eigen::fix<N>);
 
-    grid.xe[0](i_lhs) = xe;
-    grid.xc[0](i_lhs) = xc;
-    grid.dx[0](i_lhs) = dx;
+    set_t0(in_g);
 
-    fluid_v[RHO](i_lhs) = rho;
+    v.fluid_sca = in_s.pad({{NZ_GHOST, NZ_GHOST}, {0,0}});
+    v.fluid_vec = in_v.pad({{NZ_GHOST, NZ_GHOST}, {0,0}, {0,0}});
+    
+/*    grid.xe[0](i_lhs) = in_g.xe;
+    grid.xc[0](i_lhs) = in_g.xc;
+    grid.dx[0](i_lhs) = in_g.dx;
+*/
+/*    fluid_v[RHO](i_lhs) = rho;
     fluid_v[PRS](i_lhs) = prs;
     fluid_v[XVL](i_lhs) = xvel;
     fluid_v[YVL](i_lhs) = yvel;
     fluid_v[ZVL](i_lhs) = zvel;
     fluid_v[FLT](i_lhs) = f;
+*/
 
     build_ekin();
 
@@ -135,8 +146,9 @@ for (index_type i = frame::j0; i < frame::jM; ++i) {
   }
 
   constexpr inline void build_ekin() {
-    ekin = half * (fluid_v[XVL].square() + fluid_v[YVL].square() +
-                   fluid_v[ZVL].square());
+/*    ekin = half * (fluid_v[XVL].square() + fluid_v[YVL].square() +
+                   fluid_v[ZVL].square());*/
+    ekin = half * (v.vector_field
   }
 
   constexpr inline void build_cdx() {

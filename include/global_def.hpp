@@ -4,7 +4,6 @@
 #include <utility>
 
 #include <Eigen/Dense>
-#include <unsupported/Eigen/CXX11/Tensor>
 
 // index type
 using index_type = Eigen::Index;  // std::ptrdiff_t;
@@ -18,17 +17,11 @@ using MatrixType = typename Eigen::Array<double, N, M>;
 template <typename V>
 using ArgConstType = Eigen::Ref<const V>;
 
-template <typename Derived>
-using ArgVectorXpr = Eigen::ArrayBase<Derived>;
-
-template <typename Derived>
-using ArgMatrixXpr = Eigen::MatrixBase<Derived>;
-
 #define EIGEN_INITIALIZE_MATRICES_BY_ZERO
 #define EIGEN_NO_AUTOMATIC_RESIZING
 
 // fluid variable IDs
-enum { RHO, ENT, EIN, FLT, N_FLUIDS };
+enum { RHO, PRS, ENT, EIN, TMP, FLT, N_FLUIDS };
 enum { VEL, N_FLUIDV };
 
 
@@ -56,21 +49,5 @@ constexpr inline auto operator-(Seq<Ts...> s, index_type a) {
   return Eigen::seqN(s.first() - a, s.size());
 }
 
-template<index_type ...NXs>
-struct GridSet
-{
-  constexpr static index_type NDIM = sizeof...(NXs);
-  std::array<VectorType<NXs>..., NDIM> xe, xc, dx;
-};
 
-template<index_type ...NXs>
-struct VarSet
-{
-  using scalar_field = Eigen::TensorFixedSize<double, Eigen::Sizes<NXs...>>;
-  
-  using vector_field = Eigen::TensorFixedSize<double, Eigen::Sizes<NXs...>>;
 
-  std::array<scalar_field, N_FLUIDS> fluid_sca;
-  std::array<vector_field, N_FLUIDV> fluid_vec;
-  
-};

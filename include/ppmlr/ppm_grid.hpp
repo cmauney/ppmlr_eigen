@@ -15,16 +15,18 @@ namespace ppm
 template <typename GeometorType, typename Frame>
 struct PPMGrid {
   using frame = Frame;
-  using vector_type = VectorType<frame::iN>;
   using geo_type = GeometorType;
 
+  using frame::iN;
   // grid values
-  std::array<vector_type, 2> xe, xc, dx, dvol;
+//  MatrixType<iN, 2> xe, xc, dx, dvol;
 
+  VectorType<iN> xe0, xc0, dx0, dvol0;
+  VectorType<iN> xen, xcn, dxn, dvoln;
   // storage space for wiggle
-  vector_type __xe, __xc, __dx, __dvol;
+  VectorType<iN> __xe, __xc, __dx, __dvol;
 
-  vector_type amid, xnolap, xndiff;
+  VectorType<iN> amid, xnolap, xndiff;
 
   //  sweep_vector_t<NZ_SWEEP> r, u, v, w, p, e, f;
   //  sweep_vector_t<NZ_SWEEP> q;
@@ -35,23 +37,34 @@ struct PPMGrid {
 
   PPMGrid() : radius(1.0) {}
 
-  template <index_type I>
-  constexpr inline void build_volume() {
-    dvol[I] = geometer.volume(xe[I], dx[I]);
+  template<typename GridSlice>
+  constexpr inline void set_t0( const GridSlice& in_g )
+  {
+    xe0 = in_g.pad({NZ_GHOST, NZ_GHOST});
+    xc0 = in_g.pad({NZ_GHOST, NZ_GHOST});
+    dx0 = in_g.pad({NZ_GHOST, NZ_GHOST});
   }
 
-  constexpr inline void build_amid() { amid = geometer.area_mid(xe[0], xe[1]); }
+  template <index_type I>
+  constexpr inline void build_volume() {
+    if constexpr( I == 0 )
+      dvol0 = geometer.volume(xe0, dx0);
+    else
+      dvoln = geometer.volume(xen, dxn);
+  }
+
+  constexpr inline void build_amid() { amid = geometer.area_mid(xe0, xen); }
 
   constexpr inline void build_overlap() {
-    xnolap = geometer.overlap_volume(xe[0], xe[1]);
-    xndiff = xe[1] - xe[0];
+    xnolap = geometer.overlap_volume(xe0, xen);
+    xndiff = xen - xe0;
   }
 
   constexpr inline void store_coords() {
-    __xe.swap(xe[0]);
-    __xc.swap(xc[0]);
-    __dx.swap(dx[0]);
-    __dvol.swap(dvol[0]);
+    __xe.swap(xe0);
+    __xc.swap(xc0);
+    __dx.swap(dx0);
+    __dvol.swap(dvol0);
     /*    for (index_type i = bp::i0; i < bp::iN; ++i) {*/
     //__xe[i] = xe[0][i];
     //__xc[i] = xc[0][i];
@@ -63,10 +76,10 @@ struct PPMGrid {
   }
 
   inline void retieve_coords() {
-    xe[0].swap(__xe);
-    xc[0].swap(__xe);
-    dx[0].swap(__xe);
-    dvol[0].swap(__xe);
+    xe0.swap(__xe);
+    xc0.swap(__xe);
+    dx0.swap(__xe);
+    dvol0.swap(__xe);
     /* for (index_type i = bp::i0; i < bp::iN; ++i) {*/
     // xe[0][i] = __xe[i];
     // xc[0][i] = __xc[i];

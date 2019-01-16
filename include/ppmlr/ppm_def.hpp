@@ -34,12 +34,22 @@ struct VectorFrame {
 
 
 template <index_type N>
-using ppm_gridset = GridSet<VectorFrame<N>::iN>;
+using PPMGridSet = VectorType<VectorFrame<N>::iN>;
 
 template <index_type N>
-using ppm_varset = VarSet<VectorFrame<N>::iN>;
+using PPMVarSet = MatrixType<VectorFrame<N>::iN, N_FLUIDS + 3 * N_FLUIDV>;
 
-enum {PRHO, PPRS, PXVL, PENT, PFLT};
+enum {QRHO, QPRS, QXVL, NQV};
+enum {URHO, UXVL, UYVL, UZVL, UEIN, UENT, NUV};
+
+template<index_type N, index_type NV>
+using PPMSub = std::array <Eigen::Ref
+                            < 
+                              VectorType<VectorFrame<N>::iN> 
+                            >, 
+                          NV
+                          >;
+
 
 //template <typename Container>
 //using FluidVars = std::array<Container, N_FLUIDV>;
