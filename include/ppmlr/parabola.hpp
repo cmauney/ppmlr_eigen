@@ -106,15 +106,6 @@ struct Parabola {
     ar = zero;
   }
 
-  /*template <typename DerivedV, typename DerivedM>
-  constexpr inline void construct(const ArgVectorXpr<DerivedV>& a,
-                                  const ArgVectorXpr<DerivedV>& flat,
-                                  const ArgMatrixXpr<DerivedM>& pbase) {*/
-  /*  template <typename Derived>
-    constexpr inline void construct(ArgVectorXpr<Derived>& a,
-                                    const vector_type& flat,
-                                    const matrix_type& pbase) {*/
-
   constexpr inline void construct(const arg_vector_type& a,
                                   const arg_vector_type& flat,
                                   const arg_matrix_type& pbase) {
@@ -143,116 +134,29 @@ struct Parabola {
     auto r2 = seqN(i0 + 1, Nm2);
     del_a(r2) =
         pbase.col(3)(r2) * diff_an(r2) + pbase.col(4)(r2) * diff_an(r2 - 1);
-    /*del_a(seqN(i0 + 1, Nm2)) =
-        pbase.col(3)(seqN(i0 + 1, Nm2)) * diff_an(seqN(i0 + 1, Nm2)) +
-        pbase.col(4)(seqN(i0 + 1, Nm2)) * diff_an(seqN(i0, Nm2));*/
 
     diff_amin(r2) = diff_an(r2 - 1).min(diff_an(r2));
 
     del_a(r2) *= (del_a(r2)).abs().min(two * diff_amin(r2)).sign();
     del_a(r2) = (diff_an(r2 - 1) * diff_an(r2)).select(zero, del_a(r2));
-    /*    diff_amin(seqN(i0 + 1, Nm2)) =
-            diff_an(seqN(i0, Nm2)).min(diff_an(seqN(i0 + 1, Nm2)));
 
-        del_a(seqN(i0 + 1, Nm2)) *= (del_a(seqN(i0 + 1, Nm2)))
-                                        .abs()
-                                        .min(two * diff_amin(seqN(i0 + 1, Nm2)))
-                                        .sign();
-
-    del_a(seqN(i0 + 1, Nm2)) =
-        (diff_an(seqN(i0, Nm2)) * diff_an(seqN(i0 + 1, Nm2)))
-            .select(zero, del_a(seqN(i0 + 1, Nm2)));
-    */
-
-    //    auto twodam_ = (2.0 * diff_an_.abs());
-    //    auto twodamm_ = twodam_.min(twodam_(im1));
-
-    //    del_a = ((diff_an_ * diff_an_(im1)) < zero)
-    //                .select(zero, del_a * (del_a.abs().min(twodamm_)).sign());
-
-    // two_diff_an_abs = 2.0 * diff_an.abs();
-    // two_diff_an_min = two_diff_an_abs(im1).min(two_diff_an_abs);
-
-    // del_a =
-    //    ((diff_an * diff_an(im1)) < zero)
-    //        .select(zero, del_a * (del_a.abs().min(two_diff_an_min).sign()));
-
-    // v_range<i0 + 1, nN - 3> r3;
     auto r3 = seqN(i0 + 1, Nm3);
     ar(r3) = a(r3) + pbase.col(0)(r3) * diff_an(r3) +
              pbase.col(1)(r3) * del_a(r3 + 1) + pbase.col(2)(r3) * del_a(r3);
 
     al(r3 + 1) = ar(r3);
-    /*ar(seqN(i0 + 1, Nm3)) =
-        a(seqN(i0 + 1, Nm3)) +
-        pbase.col(0)(seqN(i0 + 1, Nm3)) * diff_an(seqN(i0 + 1, Nm3)) +
-        pbase.col(1)(seqN(i0 + 1, Nm3)) * del_a(seqN(i0 + 2, Nm3)) +
-        pbase.col(2)(seqN(i0 + 1, Nm3)) * del_a(seqN(i0 + 1, Nm3));
-
-    al(seqN(i0 + 2, Nm3)) = ar(seqN(i0 + 1, Nm3));*/
-
-    // for (index_type i = frame::i0; i < frame::iN - 1; ++i) {
-    // diff_an[i] = a[i + 1] - a[i];
-    // two_diff_an_abs[i] = 2.0 * std::abs(diff_an[i]);
-    //}
-
-    // for (index_type i = frame::i0 + 1; i < frame::iN - 2; ++i) {
-    // two_diff_an_min[i] = std::min(two_diff_an_abs[i - 1],
-    // two_diff_an_abs[i]);
-    //}
-
-    // for (index_type i = frame::i0 + 1; i < frame::iN - 2; ++i) {
-    // del_a[i] = pbase(i, 3) * diff_an[i] + pbase(i, 4) * diff_an[i - 1];
-
-    // del_a[i] = std::copysign(
-    // std::min(std::abs(del_a[i]), two_diff_an_min[i]),
-
-    // del_a[i]);
-
-    // if (diff_an[i - 1] * diff_an[i] < 0.0)
-    // del_a[i] = 0.0;
-    //}
-
-    // for (index_type i = frame::i0 + 1; i < frame::iN - 2; ++i) {
-    // ar[i] = a[i] + pbase(i, 0) * diff_an[i] + pbase(i, 1) * del_a[i + 1] +
-    // pbase(i, 2) * del_a[i];
-    // al[i + 1] = ar[i];
-    /*}*/
-
-    // const auto cmi = seqN(i0 + 2, Nm4);
-    // v_range<i0 + 2, nN - 4> r4;
+   
     auto r4 = seqN(i0 + 2, Nm4);
     onemfl(r4) = 1.0 - flat(r4);
 
     ar(r4) = flat(r4) * a(r4) + onemfl(r4) * ar(r4);
     al(r4) = flat(r4) * a(r4) + onemfl(r4) * al(r4);
 
-    //    for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
-    //      double onemfl = 1.0 - flat[i];
-    //      ar[i] = flat[i] * a[i] + onemfl * ar[i];
-    //      al[i] = flat[i] * a[i] + onemfl * al[i];
-    //    }
-
     da(r4) = ar(r4) - al(r4);
     a6(r4) = (6.0 * (a(r4) - half * (al(r4) + ar(r4))));
-    /*    auto tmp1_ = (ar - a) * (a - al);
-        auto tmp2_ = da.square();
-        auto tmp3_ = da * a6;*/
     tmp1(r4) = (ar(r4) - a(r4)) * (a(r4) - al(r4));
     tmp2(r4) = da(r4).square();
     tmp3(r4) = da(r4) * a6(r4);
-
-    /*    for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
-          //      da[i] = ar[i] - al[i];
-          //      a6[i] = 6.0 * (a[i] - half * (al[i] + ar[i]));
-          da[i] = t1[i];
-          a6[i] = t2[i];
-
-          tmp1[i] = (ar[i] - a[i]) * (a[i] - al[i]);
-          tmp2[i] = da[i] * da[i];
-          tmp3[i] = da[i] * a6[i];
-        }
-        */
 
     for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
       bool redo = false;
@@ -275,10 +179,6 @@ struct Parabola {
       }
     }
 
-    //    for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
-    //      da[i] = ar[i] - al[i];
-    //      a6[i] = 6.0 * (a[i] - half * (al[i] + ar[i]));
-    //    }
   }
 
   constexpr inline double rc_left(const index_type i,
@@ -294,6 +194,7 @@ struct Parabola {
   }
 };
 
+/*
 template <typename ParabolaType, index_type NP>
 struct ParabolaSet {
   using parabola_type = ParabolaType;
@@ -303,7 +204,6 @@ struct ParabolaSet {
   using arg_matrix_type = typename parabola_type::arg_matrix_type;
 
   using parabola_basis = typename parabola_type::basis_type;
-//  using parabola_array = FluidVars<parabola_type>;
   using parabola_array = std::array<parabola_type, NP>;
   using p_data = std::array<vector_type&, NP>;
 
@@ -317,10 +217,8 @@ struct ParabolaSet {
 
   inline void prepare(const arg_vector_type& dx) { basis.prepare(dx); }
 
-  //  template <index_type FN>
   constexpr inline void build(const p_data& fluid_v,
                               const vector_type& flat){
-                              //   const std::array<FLUID_VI, FN>& fidx) {) {
     for (index_type i = 0; i < NP; ++i) {
       parabolas[i].construct(fluid_v[i], flat, basis.basis);
     }
@@ -331,5 +229,5 @@ struct ParabolaSet {
   }
 
   constexpr inline const parabola_array& arr() const { return parabolas; }
-};
+};*/
 }  // namespace ppm

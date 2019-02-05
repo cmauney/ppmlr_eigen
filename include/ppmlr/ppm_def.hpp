@@ -16,7 +16,7 @@ constexpr double omega1 = 0.75;
 constexpr double omega2 = 5.0;
 constexpr double epsilon = 0.33;
 
-constexpr index_type N_STATEV = 3;
+//constexpr index_type N_STATEV = 3;
 constexpr index_type NZ_GHOST = 6;
 
 
@@ -31,13 +31,11 @@ struct VectorFrame {
   constexpr static index_type jM = N + NZ_GHOST;
 };
 
-
-
 template <index_type N>
 using PPMGridSet = VectorType<VectorFrame<N>::iN>;
 
 template <index_type N>
-using PPMVarSet = MatrixType<VectorFrame<N>::iN, N_FLUIDS + 3 * N_FLUIDV>;
+using PPMVarSet = MatrixType<VectorFrame<N>::iN, N_FLUID_COLS>;
 
 enum {QRHO, QPRS, QXVL, NQV};
 enum {URHO, UXVL, UYVL, UZVL, UEIN, UENT, NUV};

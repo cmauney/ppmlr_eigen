@@ -21,20 +21,7 @@ using ArgConstType = Eigen::Ref<const V>;
 #define EIGEN_NO_AUTOMATIC_RESIZING
 
 // fluid variable IDs
-enum { RHO, PRS, ENT, EIN, TMP, FLT, N_FLUIDS };
-enum { VEL, N_FLUIDV };
-
-
-// IDs of the primative variables (technically prs is not primative but easier
-// to use. these define the states of the riemann problem during ppm
-//constexpr std::array<FLUID_VI, 3> PRIMATIVE_VARS{RHO, PRS, XVL};
-
-// conserved quantities. note these are 'specific', i.e. per-unit-mass.
-//constexpr std::array<FLUID_VI, 6> CONSERVATIVE_VARS{RHO, XVL, YVL,
-//                                                    ZVL, EIN, ENT};
-
-// total number of advected quantities
-//constexpr index_type N_FLUIDV = 8;
+enum { RHO, PRS, ENT, EIN, TMP, FLT, XVL, YVL, ZVL, N_FLUID_COLS };
 
 // used for convenient Eigen slicing
 // note: no bounds checking is done (for now)

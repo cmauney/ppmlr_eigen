@@ -4,6 +4,7 @@
 #include <iostream>
 #include <valarray>
 
+#include "physics/eos.hpp"
 #include "global_const.hpp"
 #include "global_def.hpp"
 //#include "ppmlr/ppm_constant.hpp"
@@ -12,12 +13,10 @@ namespace physics {
 
 constexpr double courant = 0.5;
 
-template<typename EOS>
 struct Timestep {
   double last_dt, dt, hdt;
-  const EOS& eos;
 
-  Timestep(const EOS& _eos) : eos(_eos) {}
+  Timestep() {}
 
   template <typename V>
   constexpr inline double ridt(const double svel, const V& xvel, const V& dx) {
@@ -31,8 +30,9 @@ struct Timestep {
     hdt = half * dt;
   }
 
-  template <typename V>
-  constexpr inline void first_dt(const V& prs,
+  template <class V>
+  constexpr inline void first_dt(const physics::IdealGas& eos,
+                                 const V& prs,
                                  const V& rho,
                                  const V& xvel,
                                  const V& dx) {

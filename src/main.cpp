@@ -20,15 +20,13 @@ constexpr double dr = 0.125;
 constexpr double pl = 1.0;
 constexpr double dl = 1.0;
 
-constexpr double my_gamma = 1.4;
-
 template <typename V>
 constexpr inline auto etot(index_type n,
                            const V& p,
                            const V& r,
                            const std::array<V, 3>& vs,
                            V& e) {
-  double gm1 = (my_gamma - 1.0);
+  double gm1 = (simulation::my_gamma - 1.0);
   e = p / (r * gm1) + half * (vs[0].square() + vs[1].square() + vs[2].square());
   //  for (index_type i = 0; i < n; ++i) {
   //    e[i] =
@@ -110,21 +108,23 @@ void dump(index_type N, double t, Vs&&... vs) {
 struct sweep_x {
   ppm::PPMLR<simulation::XGEO, simulation::NX> ppmlr_drv;
 
-  sweep_x(const physics::Hydro& h) : ppmlr_drv(h) {}
+  sweep_x(const physics::Timestep& ts, const physics::IdealGas& eos) : ppmlr_drv(ts, eos) {}
 };
 
 int main() {
   //  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
-  physics::Hydro hydro(my_gamma);
-  sweep_x swpx(hydro);
+//  physics::Hydro hydro(my_gamma);
+  physics::IdealGas eos(simulation::my_gamma);
+  physics::Timestep ts;
+  sweep_x swpx(ts, eos);
 
   auto [xe, xc, dx] = gridder<VectorType, simulation::NX>(0.0, 1.0);
   auto [r, p, u, e, f] = initial_conditions<VectorType, simulation::NX>(xc);
 
   std::chrono::duration<double> rt_s(0);
 
-  hydro.first_dt(p, r, u[0], dx);
+  ts.first_dt(eos, p, r, u[0], dx);
   double time = 0.0;
 
   index_type ncycle = 0;
@@ -133,7 +133,7 @@ int main() {
 
     auto start_hydro = std::chrono::high_resolution_clock::now();
 
-    time += hydro.dt;
+    time += ts.dt;
     ++ncycle;
 
     etot(simulation::NX, p, r, u, e);
@@ -154,10 +154,11 @@ int main() {
 
     start_hydro = std::chrono::high_resolution_clock::now();
 
-    hydro.dt_courant(swpx.ppmlr_drv.max_cdx, u[0], dx);
+    ts.dt_courant(swpx.ppmlr_drv.max_cdx, u[0], dx);
 
     end_hydro = std::chrono::high_resolution_clock::now();
     rt_s += (end_hydro - start_hydro);
+    
   }
 
   std::cout << time << std::endl;

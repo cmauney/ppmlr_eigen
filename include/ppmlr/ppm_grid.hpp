@@ -12,24 +12,20 @@
 namespace ppm
 {
 
-template <typename GeometorType, typename Frame>
+template <class GeometorType, class Frame>
 struct PPMGrid {
   using frame = Frame;
   using geo_type = GeometorType;
 
-  using frame::iN;
+  using vector_type = VectorType<Frame::iN>;
   // grid values
-//  MatrixType<iN, 2> xe, xc, dx, dvol;
-
-  VectorType<iN> xe0, xc0, dx0, dvol0;
-  VectorType<iN> xen, xcn, dxn, dvoln;
+  vector_type xe0, xc0, dx0, dvol0;
+  vector_type xen, xcn, dxn, dvoln;
+  
   // storage space for wiggle
-  VectorType<iN> __xe, __xc, __dx, __dvol;
+  vector_type __xe, __xc, __dx, __dvol;
 
-  VectorType<iN> amid, xnolap, xndiff;
-
-  //  sweep_vector_t<NZ_SWEEP> r, u, v, w, p, e, f;
-  //  sweep_vector_t<NZ_SWEEP> q;
+  vector_type amid, xnolap, xndiff;
 
   // geometry variable
   geo_type geometer;
@@ -37,12 +33,13 @@ struct PPMGrid {
 
   PPMGrid() : radius(1.0) {}
 
-  template<typename GridSlice>
-  constexpr inline void set_t0( const GridSlice& in_g )
+  template<class V>
+  constexpr inline void set_t0( const V& xe, const V& xc, const V& dx )
   {
-    xe0 = in_g.pad({NZ_GHOST, NZ_GHOST});
-    xc0 = in_g.pad({NZ_GHOST, NZ_GHOST});
-    dx0 = in_g.pad({NZ_GHOST, NZ_GHOST});
+    auto r1 = Eigen::seq(frame::j0, frame::jM);
+    xe0(r1) = xe;
+    xc0(r1) = xc;
+    dx0(r1) = dx;
   }
 
   template <index_type I>
@@ -65,28 +62,13 @@ struct PPMGrid {
     __xc.swap(xc0);
     __dx.swap(dx0);
     __dvol.swap(dvol0);
-    /*    for (index_type i = bp::i0; i < bp::iN; ++i) {*/
-    //__xe[i] = xe[0][i];
-    //__xc[i] = xc[0][i];
-    //__dx[i] = dx[0][i];
-    //__dvol[i] = dvol[0][i];
-    //}
-
-    //  __xe[vector_type::iN] = xe[0][vector_type::iN];
   }
 
-  inline void retieve_coords() {
+  constexpr inline void retieve_coords() {
     xe0.swap(__xe);
     xc0.swap(__xe);
     dx0.swap(__xe);
     dvol0.swap(__xe);
-    /* for (index_type i = bp::i0; i < bp::iN; ++i) {*/
-    // xe[0][i] = __xe[i];
-    // xc[0][i] = __xc[i];
-    // dx[0][i] = __dx[i];
-    // dvol[0][i] = __dvol[i];
-    /*}*/
-    //    xe[0][vector_type::iN] = __xe[vector_type::iN];
   }
 };
 

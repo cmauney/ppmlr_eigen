@@ -28,12 +28,6 @@ struct StateDomain {
     auto i_ = Eigen::seqN(frame::i0 + 2, Eigen::fix<frame::iN - 4>);
     Cdtdx(i_) = cdx(i_) * hdt;
     fCdtdx(i_) = 1.0 - fourthird * Cdtdx(i_);
-    /*
-    for (index_type i = frame::i0 + 2; i < frame::iN - 2; ++i) {
-      Cdtdx[i] = cdx[i] * hydro.hdt;
-      fCdtdx[i] = 1.0 - fourthird * Cdtdx[i];
-    }
-    */
   }
 };
 
@@ -57,7 +51,7 @@ struct State {
   }
 };
 
-template <typename StateType>
+/*template <typename StateType>
 struct StateSet {
   using state_type = StateType;
   using vector_type = typename state_type::vector_type;
@@ -88,5 +82,6 @@ struct StateSet {
     return states[i];
   }
 };
+*/
 
 }  // namespace ppm

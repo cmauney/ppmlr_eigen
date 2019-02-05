@@ -10,9 +10,7 @@
 
 namespace physics {
 
-constexpr double courant = 0.5;
-
-struct Hydro {
+/*struct Hydro {
   const double gamma, gammam1;
   double last_dt, dt, hdt;
 
@@ -39,8 +37,6 @@ struct Hydro {
                                  const V& xvel,
                                  const V& dx) {
     auto ctdx = (gamma * prs / rho).sqrt() / dx;
-    /*    for (index_type i = 0; i < N; ++i)*/
-    // ctdx[i] = std::sqrt(gamma * prs[i] / rho[i]) / dx[i];
 
     auto svel = ctdx.maxCoeff();
 
@@ -57,5 +53,5 @@ struct Hydro {
     set_dt(std::min(dtu, dt_n));
   }
 };
-
+*/
 }  // namespace physics
