@@ -13,7 +13,7 @@
 //#define _GNU_SOURCE
 //#include <fenv.h>
 
-constexpr index_type NCYC = 1500;
+constexpr index_type NCYC = 100;
 
 constexpr double pr = 0.1;
 constexpr double dr = 0.125;

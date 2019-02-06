@@ -50,7 +50,7 @@ struct ParabolaBasis
   }
 
   // constexpr inline void prepare(const vector_type& dx) {
-  constexpr inline void prepare(const vector_type& dx)
+  constexpr inline void prepare(const arg_vector_type& dx)
   {
     using Eigen::fix;
     using Eigen::seqN;
@@ -113,9 +113,9 @@ struct Parabola
     ar = zero;
   }
 
-  constexpr inline void construct(const vector_type& a,
-                                  const vector_type& flat,
-                                  const matrix_type& pbase)
+  constexpr inline void construct(const arg_vector_type& a,
+                                  const arg_vector_type& flat,
+                                  const arg_matrix_type& pbase)
   {
     // clear();
 

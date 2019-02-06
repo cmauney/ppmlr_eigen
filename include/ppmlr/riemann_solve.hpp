@@ -35,7 +35,7 @@ struct RiemannSolve
   RiemannSolve() = default;
   ~RiemannSolve() = default;
 
-  inline void operator()(const physics::IdealGas& eos,
+  constexpr inline void operator()(const physics::IdealGas& eos,
                          const state_set& states,
                          vector_type& pmid,
                          vector_type& umid)
