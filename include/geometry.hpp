@@ -7,23 +7,35 @@
 
 namespace geo {
 // geometry IDs
-enum GEO { CART = 0, CYLIN, SPHERI, CYLIN_THETA, SPHERI_THETA, SPHERI_PHI };
+enum GEO
+{
+  CART = 0,
+  CYLIN,
+  SPHERI,
+  CYLIN_THETA,
+  SPHERI_THETA,
+  SPHERI_PHI
+};
 
-struct planar_geo_t {
+struct planar_geo_t
+{
   constexpr planar_geo_t() {}
 
-  template <typename V>
-  constexpr inline V volume(const V& /*x*/, const V& dx) const {
+  template<typename V>
+  constexpr inline V volume(const V& /*x*/, const V& dx) const
+  {
     return dx;
   }
 
-  template <typename V>
-  constexpr inline V area_mid(const V& /*x0*/, const V& /*xn*/) const {
+  template<typename V>
+  constexpr inline V area_mid(const V& /*x0*/, const V& /*xn*/) const
+  {
     return V::Ones();
   }
 
-  template <typename V>
-  constexpr inline V overlap_volume(const V& x0, const V& xn) const {
+  template<typename V>
+  constexpr inline V overlap_volume(const V& x0, const V& xn) const
+  {
     return xn - x0;
   }
 };
@@ -44,4 +56,4 @@ struct cylin_geo_t {
   }
 };
 */
-}  // namespace geo
+} // namespace geo

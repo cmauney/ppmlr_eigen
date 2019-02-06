@@ -20,12 +20,10 @@ constexpr double dr = 0.125;
 constexpr double pl = 1.0;
 constexpr double dl = 1.0;
 
-template <typename V>
-constexpr inline auto etot(index_type n,
-                           const V& p,
-                           const V& r,
-                           const std::array<V, 3>& vs,
-                           V& e) {
+template<typename V>
+constexpr inline auto
+etot(index_type n, const V& p, const V& r, const std::array<V, 3>& vs, V& e)
+{
   double gm1 = (simulation::my_gamma - 1.0);
   e = p / (r * gm1) + half * (vs[0].square() + vs[1].square() + vs[2].square());
   //  for (index_type i = 0; i < n; ++i) {
@@ -36,8 +34,10 @@ constexpr inline auto etot(index_type n,
   //  }
 }
 
-template <template <index_type> class V, index_type N>
-auto gridder(double xmin, double xmax) {
+template<template<index_type> class V, index_type N>
+auto
+gridder(double xmin, double xmax)
+{
   V<N> xe, xc, dx;
 
   auto ddx = (xmax - xmin) / static_cast<double>(simulation::NX);
@@ -51,8 +51,10 @@ auto gridder(double xmin, double xmax) {
   return std::make_tuple(xe, xc, dx);
 }
 
-template <template <index_type> class V, index_type N>
-auto initial_conditions(const V<N>& xc) {
+template<template<index_type> class V, index_type N>
+auto
+initial_conditions(const V<N>& xc)
+{
   V<N> rho, prs, ene, fla;
   std::array<V<N>, 3> vels;
 
@@ -78,8 +80,10 @@ auto initial_conditions(const V<N>& xc) {
   return std::make_tuple(rho, prs, vels, ene, fla);
 }
 
-template <typename... Vs>
-void printout(index_type N, Vs&&... vs) {
+template<typename... Vs>
+void
+printout(index_type N, Vs&&... vs)
+{
   std::string s;
   auto commd = [](double a) { return std::to_string(a) + ", "; };
   for (index_type i = 0; i < N; ++i) {
@@ -89,8 +93,10 @@ void printout(index_type N, Vs&&... vs) {
   }
 }
 
-template <typename... Vs>
-void dump(index_type N, double t, Vs&&... vs) {
+template<typename... Vs>
+void
+dump(index_type N, double t, Vs&&... vs)
+{
   std::ofstream of("run00.dat", std::ofstream::out | std::ofstream::app);
 
   std::string s;
@@ -105,16 +111,21 @@ void dump(index_type N, double t, Vs&&... vs) {
   of.close();
 }
 
-struct sweep_x {
+struct sweep_x
+{
   ppm::PPMLR<simulation::XGEO, simulation::NX> ppmlr_drv;
 
-  sweep_x(const physics::Timestep& ts, const physics::IdealGas& eos) : ppmlr_drv(ts, eos) {}
+  sweep_x(const physics::Timestep& ts, const physics::IdealGas& eos)
+    : ppmlr_drv(ts, eos)
+  {}
 };
 
-int main() {
+int
+main()
+{
   //  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
-//  physics::Hydro hydro(my_gamma);
+  //  physics::Hydro hydro(my_gamma);
   physics::IdealGas eos(simulation::my_gamma);
   physics::Timestep ts;
   sweep_x swpx(ts, eos);
@@ -158,7 +169,6 @@ int main() {
 
     end_hydro = std::chrono::high_resolution_clock::now();
     rt_s += (end_hydro - start_hydro);
-    
   }
 
   std::cout << time << std::endl;

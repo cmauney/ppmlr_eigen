@@ -1,5 +1,5 @@
-#CXX ?= g++
-CXX = clang++
+CXX ?= g++
+#CXX = clang++
 
 # path #
 SRC_PATH = ./src

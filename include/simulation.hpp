@@ -14,8 +14,8 @@ constexpr index_type NDIM = 1;
 
 // X dim definitions
 using XGEO = geo::planar_geo_t;
-constexpr index_type NX = 128;
+constexpr index_type NX = 1000;
 
 constexpr double my_gamma = 1.4;
 
-}  // namespace simulation
+} // namespace simulation

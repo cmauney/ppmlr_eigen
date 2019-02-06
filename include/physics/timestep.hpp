@@ -4,38 +4,42 @@
 #include <iostream>
 #include <valarray>
 
-#include "physics/eos.hpp"
 #include "global_const.hpp"
 #include "global_def.hpp"
+#include "physics/eos.hpp"
 //#include "ppmlr/ppm_constant.hpp"
 
 namespace physics {
 
 constexpr double courant = 0.5;
 
-struct Timestep {
+struct Timestep
+{
   double last_dt, dt, hdt;
 
   Timestep() {}
 
-  template <typename V>
-  constexpr inline double ridt(const double svel, const V& xvel, const V& dx) {
+  template<typename V>
+  constexpr inline double ridt(const double svel, const V& xvel, const V& dx)
+  {
     return std::max(svel, (xvel.abs() / dx).maxCoeff());
   }
 
-  constexpr inline void set_dt(double timestep) {
+  constexpr inline void set_dt(double timestep)
+  {
     last_dt = dt;
 
     dt = timestep;
     hdt = half * dt;
   }
 
-  template <class V>
+  template<class V>
   constexpr inline void first_dt(const physics::IdealGas& eos,
                                  const V& prs,
                                  const V& rho,
                                  const V& xvel,
-                                 const V& dx) {
+                                 const V& dx)
+  {
 
     auto svel = (eos.c(prs, rho) / dx).maxCoeff();
 
@@ -44,8 +48,9 @@ struct Timestep {
     last_dt = dt;
   }
 
-  template <typename V>
-  constexpr inline void dt_courant(double cdx, const V& xvel, const V& dx) {
+  template<typename V>
+  constexpr inline void dt_courant(double cdx, const V& xvel, const V& dx)
+  {
     auto dt_n = courant / ridt(cdx, xvel, dx);
 
     auto dtu = last_dt * 1.1;
@@ -53,4 +58,4 @@ struct Timestep {
   }
 };
 
-}  // namespace physics
+} // namespace physics

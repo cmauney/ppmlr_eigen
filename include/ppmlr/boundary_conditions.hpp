@@ -15,55 +15,55 @@
 
 namespace ppm {
 
-template <class Grid>
-struct BoundaryCondition {
+template<class Grid, index_type N>
+struct BoundaryCondition
+{
   using grid_type = Grid;
-  using frame = typename grid_type::frame;
-//  using vector_type = VectorType<frame::iN>;
+  using vector_type = __PPMVector<N>;
+  using fluid_field = __PPMFluidVars<N>;
+  //  using frame = typename grid_type::frame;
+  //  using vector_type = VectorType<frame::iN>;
 
   BoundaryCondition() = default;
   ~BoundaryCondition() = default;
 
-  template<class V>
-  void reflect_bc(V& v, index_type c, double symm = 1.0) {
-    for (index_type i = frame::i0; i < frame::j0; ++i) {
-      v.col(c)[frame::j0 - i - 1] = symm * v.col(c)[i + frame::j0];
-    }
-
-    for (index_type i = frame::i0; i < frame::j0; ++i) {
-      v.col(c)[frame::jM + i] = symm * v.col(c)[frame::jM - i - 1];
+  constexpr inline void reflect_var(vector_type& v, double symm = 1.0)
+  {
+    for (index_type i = 0; i < NZ_GHOST; ++i) {
+      v[NZ_GHOST - i - 1] = symm * v[NZ_GHOST + i];
+      v[N + NZ_GHOST + i] = symm * v[N + NZ_GHOST - i - 1];
     }
   }
 
-  template<class V>
-  inline void apply(grid_type& g, V& vars) {
-    reflect_bc(vars,RHO);
-    reflect_bc(vars,PRS);
-    reflect_bc(vars,XVL, -1.0);
-    reflect_bc(vars,YVL);
-    reflect_bc(vars,ZVL);
-    reflect_bc(vars,ENT);
-    reflect_bc(vars,FLT);
+  constexpr inline void extend_grid(grid_type& g)
+  {
+    for (index_type i = 0; i < NZ_GHOST; ++i) {
+      index_type l = NZ_GHOST - i;
+      index_type r = N + NZ_GHOST + i;
 
-    for (index_type i = frame::i0; i < frame::j0; ++i) {
-      g.dx0[frame::j0-i-1] = g.dx0[i+frame::j0];
-      g.dx0[frame::jM+i] = g.dx0[frame::jM+i-1];
+      g.xe0[l - 1] = g.xe0[l] - g.dx0[l - 1];
 
-      g.xe0[frame::j0 - i - 1] =
-          g.xe0[frame::j0 - i] - g.dx0[frame::j0 - i - 1];
+      g.xc0[l - 1] = g.xc0[l] - g.dx0[l - 1];
 
-      g.xc0[frame::j0 - i - 1] =
-          g.xc0[frame::j0 - i] - g.dx0[frame::j0 - i - 1];
+      g.xe0[r] = g.xe0[r - 1] + g.dx0[r - 1];
 
-      g.xe0[frame::jM + i] =
-          g.xe0[frame::jM + i - 1] + g.dx0[frame::jM + i - 1];
-      
-      g.xc0[frame::jM + i] =
-          g.xc0[frame::jM + i - 1] + g.dx0[frame::jM + i - 1];
-
-
+      g.xc0[r] = g.xc0[r - 1] + g.dx0[r - 1];
     }
+  }
+
+  constexpr inline void apply(grid_type& g, fluid_field& vars)
+  {
+    reflect_var(vars[RHO]);
+    reflect_var(vars[PRS]);
+    reflect_var(vars[XVL], -1.0);
+    reflect_var(vars[YVL]);
+    reflect_var(vars[ZVL]);
+    reflect_var(vars[ENT]);
+    reflect_var(vars[FLT]);
+
+    reflect_var(g.dx0);
+    extend_grid(g);
   }
 };
 
-}  // namespace ppm
+} // namespace ppm

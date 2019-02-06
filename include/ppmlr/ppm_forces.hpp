@@ -13,8 +13,4 @@
 #include "state.hpp"
 #include "sweep_grid.hpp"
 
-namespace ppm {
-
-
-
-} // namespace ppm
+namespace ppm {} // namespace ppm
