@@ -3,3 +3,6 @@ __oldMakefile
 *.dat
 *.plt
 build/
+spack-env/
+.vscode/
+.cache/

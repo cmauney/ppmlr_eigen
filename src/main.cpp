@@ -4,6 +4,9 @@
 #include <iostream>
 #include <tuple>
 
+#include <fmt/core.h>
+#include <string_view>
+
 #include "physics/hydro.hpp"
 #include "ppmlr/ppm_grid.hpp"
 #include "ppmlr/ppmlr.hpp"
@@ -78,19 +81,6 @@ initial_conditions(const V<N>& xc)
   etot(N, prs, rho, vels, ene);
 
   return std::make_tuple(rho, prs, vels, ene, fla);
-}
-
-template<typename... Vs>
-void
-printout(index_type N, Vs&&... vs)
-{
-  std::string s;
-  auto commd = [](double a) { return std::to_string(a) + ", "; };
-  for (index_type i = 0; i < N; ++i) {
-    s = "";
-    s = (commd(vs[i]) + ...);
-    std ::cout << i << ": " << s << std::endl;
-  }
 }
 
 template<typename... Vs>
